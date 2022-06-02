@@ -1,0 +1,19 @@
+name: nf.core sarek
+identifier: WF_a1220a.48
+description: Analysis pipeline to detect germline or somatic variants (pre-processing,
+  variant calling and annotation) from WGS / targeted sequencing
+softwareVersion:
+  versionName: 5d0a0b97551a9700b9532ed4d32c4e9c543a998e
+metadataStatus: Released
+workflowStatus: Released
+workflowFile: sarek.wdl
+repoName: nfcore-sarek
+gitTag: master
+inputsTemplate: inputs.json
+executable: true
+current: true
+codeRepository:
+  URL: https://github.com/truwl/nfcore-sarek/
+WebSite:
+- URL: https://github.com/nf-core/sarek
+  name: nf-core/sarek

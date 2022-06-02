@@ -1,0 +1,826 @@
+parameter_meta:
+  sarek.step:
+    description: Starting step.
+    group: input_output_options
+    help: Only one step.
+    hidden: false
+  sarek.samplesheet:
+    description: Path to comma-separated file containing information about the samples
+      in the experiment.
+    group: input_output_options
+    help: You will need to create a design file with information about the samples
+      in your experiment before running the pipeline. Use this parameter to specify
+      its location. It has to be a comma-separated file with a header row. See [usage
+      docs](https://nf-co.re/sarek/usage#input).
+    hidden: false
+  sarek.outdir:
+    description: The output directory where the results will be saved. You have to
+      use absolute paths to storage on Cloud infrastructure.
+    group: truwl_hidden
+    help: ''
+    hidden: false
+  sarek.tools:
+    description: Tools to use for variant calling and/or for annotation.
+    group: main_options
+    help: 'Multiple separated with commas.
+
+
+      Germline variant calling can currently only be performed with the following
+      variant callers:
+
+      - FreeBayes, HaplotypeCaller, Manta, mpileup, Strelka, TIDDIT
+
+
+      Somatic variant calling can currently only be performed with the following variant
+      callers:
+
+      - ASCAT, Control-FREEC, FreeBayes, Manta, MSIsensorpro, Mutect2, Strelka
+
+
+      **NB** Mutect2 for somatic variant calling cannot be combined with `--no_intervals`
+
+
+      Tumor-only somatic variant calling can currently only be performed with the
+      following variant callers:
+
+      - Control-FREEC, Manta, mpileup, Mutect2, TIDDIT
+
+
+      Annotation is done using snpEff, VEP, or even both consecutively.
+
+
+      > **NB** As Sarek will use bgzip and tabix to compress and index VCF files annotated,
+      it expects VCF files to be sorted.
+
+
+
+
+      `DNAseq`, `DNAscope` and `TNscope` are only available with `--sentieon`
+
+
+      > **NB** tools can be specified with no concern for case.'
+    hidden: false
+  sarek.no_intervals:
+    description: Disable usage of intervals.
+    group: main_options
+    help: Intervals are part of the genome chopped up, used to speed up preprocessing
+      and variant calling. Cannot be combined with `--tools mutect2`
+    hidden: false
+  sarek.nucleotides_per_second:
+    description: Estimate interval size.
+    group: main_options
+    help: Intervals are part of the genome chopped up, used to speed up preprocessing
+      and variant calling.
+    hidden: false
+  sarek.sentieon:
+    description: Enable Sentieon if available.
+    group: main_options
+    help: 'Sentieon is a commercial solution to process genomics data with high computing
+      efficiency, fast turnaround time, exceptional accuracy, and 100% consistency.
+
+
+      > **NB** Adds the following tools for the `--tools` options: `DNAseq`, `DNAscope`
+      and `TNscope`.'
+    hidden: false
+  sarek.skip_tools:
+    description: Disable specified tools.
+    group: main_options
+    help: 'Multiple tools can be specified, separated by commas.
+
+
+      > **NB** `--skip_tools baserecalibrator_report` is actually just not saving
+      the reports.
+
+      > **NB** `--skip_tools markduplicates_report` does not skip `MarkDuplicates`
+      but prevent the collection of duplicate metrics that slows down performance.
+
+      > **NB** tools can be specified with no concern for case.'
+    hidden: false
+  sarek.target_bed:
+    description: Target BED file for whole exome or targeted sequencing.
+    group: main_options
+    help: 'This parameter does _not_  imply that the workflow is running alignment
+      or variant calling only for the supplied targets.
+
+      Instead, we are aligning for the whole genome, and selecting variants only at
+      the very end by intersecting with the provided target file.
+
+      Adding every exon as an interval in case of `WES` can generate >200K processes
+      or jobs, much more forks, and similar number of directories in the Nextflow
+      work directory.
+
+      Furthermore, primers and/or baits are not 100% specific, (certainly not for
+      MHC and KIR, etc.), quite likely there going to be reads mapping to multiple
+      locations.
+
+      If you are certain that the target is unique for your genome (all the reads
+      will certainly map to only one location), and aligning to the whole genome is
+      an overkill, it is actually better to change the reference itself.
+
+
+      The recommended flow for targeted sequencing data is to use the workflow as
+      it is, but also provide a `BED` file containing targets for all steps using
+      the `--target_bed` option.
+
+      The workflow will pick up these intervals, and activate any `--exome` flag in
+      any tools that allow it to process deeper coverage.
+
+      It is advised to pad the variant calling regions (exons or target) to some extent
+      before submitting to the workflow.'
+    hidden: false
+  sarek.wes:
+    description: Enable when exome or panel data is provided.
+    group: main_options
+    help: ''
+    hidden: false
+  sarek.trim_fastq:
+    description: Run Trim Galore.
+    group: trim_split_fastq
+    help: 'Use this to perform adapter trimming with Trim Galore.
+
+      cf [Trim Galore User Guide](https://github.com/FelixKrueger/TrimGalore/blob/master/Docs/Trim_Galore_User_Guide.md).'
+    hidden: true
+  sarek.clip_r1:
+    description: Remove bp from the 5' end of read 1.
+    group: trim_split_fastq
+    help: This may be useful if the qualities were very poor, or if there is some
+      sort of unwanted bias at the 5' end.
+    hidden: true
+  sarek.clip_r2:
+    description: Remove bp from the 5' end of read 2.
+    group: trim_split_fastq
+    help: This may be useful if the qualities were very poor, or if there is some
+      sort of unwanted bias at the 5' end.
+    hidden: true
+  sarek.three_prime_clip_r1:
+    description: Remove bp from the 3' end of read 1 AFTER adapter/quality trimming
+      has been performed.
+    group: trim_split_fastq
+    help: This may remove some unwanted bias from the 3' end that is not directly
+      related to adapter sequence or basecall quality.
+    hidden: true
+  sarek.three_prime_clip_r2:
+    description: Remove bp from the 3' end of read 2 AFTER adapter/quality trimming
+      has been performed.
+    group: trim_split_fastq
+    help: This may remove some unwanted bias from the 3' end that is not directly
+      related to adapter sequence or basecall quality.
+    hidden: true
+  sarek.trim_nextseq:
+    description: Apply the --nextseq=X option, to trim based on quality after removing
+      poly-G tails.
+    group: trim_split_fastq
+    help: This may remove some unwanted bias from the 3' end that is not directly
+      related to adapter sequence or basecall quality.
+    hidden: true
+  sarek.save_trimmed:
+    description: Save trimmed FastQ file intermediates.
+    group: trim_split_fastq
+    help: ''
+    hidden: true
+  sarek.split_fastq:
+    description: Specify how many reads each split of a FastQ file contains. Set 0
+      to turn of splitting at all.
+    group: trim_split_fastq
+    help: Use the the tools seqkit/split2 to split FASTQ file by number of reads.
+    hidden: true
+  sarek.save_split_fastqs:
+    description: If set, publishes split FASTQ files. Intended for testing purposes.
+    group: trim_split_fastq
+    help: ''
+    hidden: true
+  sarek.umi_read_structure:
+    description: ''
+    group: trim_split_fastq
+    help: ''
+    hidden: true
+  sarek.group_by_umi_strategy:
+    description: ''
+    group: trim_split_fastq
+    help: ''
+    hidden: true
+  sarek.aligner:
+    description: Specify aligner to be used to map reads to reference genome.
+    group: preprocessing
+    help: '> **WARNING** Current indices for `bwa` in AWS iGenomes are not compatible
+      with `bwa-mem2` and `dragmap`.
+
+      > `Sarek` will build them automatically if not provided.
+
+
+      > **WARNING** BWA-mem2 is in active development
+
+      > Sarek might not be able to require the right amount of resources for it at
+      the moment
+
+      > We recommend to use pre-built indexes.'
+    hidden: true
+  sarek.use_gatk_spark:
+    description: Tools for which to enable usage of GATK Spark implementation.
+    group: preprocessing
+    help: "Multiple separated with commas.\n\n GATK4 BQSR tools are currently only\
+      \ available as Beta release. Use with caution!"
+    hidden: false
+  sarek.save_bam_mapped:
+    description: Save Mapped BAMs.
+    group: preprocessing
+    help: ''
+    hidden: false
+  sarek.only_paired_variant_calling:
+    description: If true, skips germline variant calling for matched normal to tumor
+      sample. Normal samples without matched tumor will still be processed through
+      germline variant calling tools.
+    group: variant_calling
+    help: ''
+    hidden: false
+  sarek.ploidy:
+    description: genome ploidy; In case of doubt, you can set different values and
+      Control-FREEC will select the one that explains most observed CNAs.
+    group: variant_calling
+    help: ''
+    hidden: true
+  sarek.ascat_purity:
+    description: Overwrite ASCAT purity.
+    group: variant_calling
+    help: Requires that `--ascat_ploidy` is set.
+    hidden: false
+  sarek.cf_coeff:
+    description: Overwrite Control-FREEC coefficientOfVariation
+    group: variant_calling
+    help: ''
+    hidden: true
+  sarek.cf_contamination_adjustment:
+    description: Overwrite Control-FREEC contaminationAdjustement
+    group: variant_calling
+    help: ''
+    hidden: true
+  sarek.cf_contamination:
+    description: Design known contamination value for Control-FREEC
+    group: variant_calling
+    help: ''
+    hidden: true
+  sarek.cf_minqual:
+    description: Minimal sequencing quality for a position to be considered in BAF
+      analysis.
+    group: variant_calling
+    help: ''
+    hidden: true
+  sarek.cf_mincov:
+    description: Minimal read coverage for a position to be considered in BAF analysis.
+    group: variant_calling
+    help: ''
+    hidden: true
+  sarek.cf_window:
+    description: Overwrite Control-FREEC window size.
+    group: variant_calling
+    help: It is recommended to use a window size of 0 for exome data.
+    hidden: true
+  sarek.joint_germline:
+    description: Enables GATK4 joint germline variant calling, if also haplotypecaller
+      is selected.
+    group: variant_calling
+    help: ''
+    hidden: false
+  sarek.generate_gvcf:
+    description: Generate g.vcf output from GATK HaplotypeCaller.
+    group: variant_calling
+    help: ''
+    hidden: false
+  sarek.no_strelka_bp:
+    description: Will not use Manta candidateSmallIndels for Strelka.
+    group: variant_calling
+    help: Not recommended by Best Practices.
+    hidden: false
+  sarek.pon:
+    description: Panel-of-normals VCF (bgzipped) for GATK Mutect2 / Sentieon TNscope.
+    group: variant_calling
+    help: 'Without PON, there will be no calls with PASS in the INFO field, only an
+      unfiltered VCF is written.
+
+      It is recommended to make your own PON, as it depends on sequencer and library
+      preparation.
+
+      For tests in iGenomes there is a dummy PON file in the Annotation/GermlineResource
+      directory, but it should not be used as a real PON file.
+
+
+      See [PON documentation](https://gatk.broadinstitute.org/hc/en-us/articles/360042479112-CreateSomaticPanelOfNormals-BETA)
+
+      > **NB** PON file should be bgzipped.'
+    hidden: false
+  sarek.pon_tbi:
+    description: Index of PON panel-of-normals VCF.
+    group: variant_calling
+    help: If none provided, will be generated automatically from the PON bgzipped
+      VCF file.
+    hidden: false
+  sarek.ignore_soft_clipped_bases:
+    description: Do not analyze soft clipped bases in the reads for GATK Mutect2.
+    group: variant_calling
+    help: use the `--dont-use-soft-clipped-bases` params with GATK.
+    hidden: false
+  sarek.vep_dbnsfp:
+    description: Enable the use of the VEP dbNSFP plugin.
+    group: annotation
+    help: ''
+    hidden: true
+  sarek.dbnsfp:
+    description: Path to dbNSFP processed file.
+    group: annotation
+    help: To be used with `--vep_dbnsfp`.
+    hidden: true
+  sarek.dbnsfp_tbi:
+    description: Path to dbNSFP tabix indexed file.
+    group: annotation
+    help: To be used with `--vep_dbnsfp`.
+    hidden: true
+  sarek.vep_loftee:
+    description: Enable the use of the VEP LOFTEE plugin.
+    group: annotation
+    help: ''
+    hidden: true
+  sarek.vep_spliceai:
+    description: Enable the use of the VEP SpliceAI plugin.
+    group: annotation
+    help: ''
+    hidden: true
+  sarek.spliceai_snv:
+    description: Path to spliceai raw scores snv file.
+    group: annotation
+    help: To be used with `--vep_spliceai`.
+    hidden: true
+  sarek.spliceai_snv_tbi:
+    description: Path to spliceai raw scores snv tabix indexed file.
+    group: annotation
+    help: To be used with `--vep_spliceai`.
+    hidden: true
+  sarek.spliceai_indel:
+    description: Path to spliceai raw scores indel file.
+    group: annotation
+    help: To be used with `--vep_spliceai`.
+    hidden: true
+  sarek.spliceai_indel_tbi:
+    description: Path to spliceai raw scores indel tabix indexed file.
+    group: annotation
+    help: To be used with `--vep_spliceai`.
+    hidden: true
+  sarek.vep_spliceregion:
+    description: Enable the use of the VEP SpliceRegion plugin.
+    group: annotation
+    help: ''
+    hidden: true
+  sarek.annotation_cache:
+    description: Enable the use of cache for annotation.
+    group: annotation
+    help: 'And disable usage of Sarek snpeff and vep specific containers for annotation
+
+
+      To be used with `--snpeff_cache` and/or `--vep_cache`.'
+    hidden: true
+  sarek.snpeff_cache:
+    description: Path to snpEff cache.
+    group: annotation
+    help: To be used with `--annotation_cache`.
+    hidden: true
+  sarek.vep_cache:
+    description: Path to VEP cache.
+    group: annotation
+    help: To be used with `--annotation_cache`.
+    hidden: true
+  sarek.genome:
+    description: Name of iGenomes reference.
+    group: reference_genome_options
+    help: 'If using a reference genome configured in the pipeline using iGenomes,
+      use this parameter to give the ID for the reference. This is then used to build
+      the full paths for all required reference genome files e.g. `--genome GRCh38`.
+
+
+      See the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for
+      more details.'
+    hidden: false
+  sarek.ac_loci:
+    description: Path to ASCAT loci file.
+    group: reference_genome_options
+    help: ''
+    hidden: false
+  sarek.ac_loci_gc:
+    description: Path to ASCAT GC correction file.
+    group: reference_genome_options
+    help: ''
+    hidden: false
+  sarek.bwa:
+    description: Path to BWA mem indices.
+    group: reference_genome_options
+    help: '> **NB** If none provided, will be generated automatically from the FASTA
+      reference. Combine with `--save_reference` to save for future runs.'
+    hidden: false
+  sarek.bwamem2:
+    description: Path to bwa-mem2 mem indices.
+    group: reference_genome_options
+    help: '> **NB** If none provided, will be generated automatically from the FASTA
+      reference, if `--aligner bwa-mem2` is specified. Combine with `--save_reference`
+      to save for future runs.'
+    hidden: false
+  sarek.chr_dir:
+    description: Path to chromosomes folder.
+    group: reference_genome_options
+    help: ''
+    hidden: false
+  sarek.dbsnp:
+    description: Path to dbsnp file.
+    group: reference_genome_options
+    help: ''
+    hidden: false
+  sarek.dbsnp_tbi:
+    description: Path to dbsnp index.
+    group: reference_genome_options
+    help: '> **NB** If none provided, will be generated automatically from the dbsnp
+      file. Combine with `--save_reference` to save for future runs.'
+    hidden: false
+  sarek.dict:
+    description: Path to FASTA dictionary file.
+    group: reference_genome_options
+    help: '> **NB** If none provided, will be generated automatically from the FASTA
+      reference. Combine with `--save_reference` to save for future runs.'
+    hidden: false
+  sarek.dragmap:
+    description: Path to dragmap indices.
+    group: reference_genome_options
+    help: '> **NB** If none provided, will be generated automatically from the FASTA
+      reference, if `--aligner dragmap` is specified. Combine with `--save_reference`
+      to save for future runs.'
+    hidden: false
+  sarek.fasta:
+    description: Path to FASTA genome file.
+    group: reference_genome_options
+    help: This parameter is *mandatory* if `--genome` is not specified.
+    hidden: false
+  sarek.fasta_fai:
+    description: Path to FASTA reference index.
+    group: reference_genome_options
+    help: '> **NB** If none provided, will be generated automatically from the FASTA
+      reference. Combine with `--save_reference` to save for future runs.'
+    hidden: false
+  sarek.germline_resource:
+    description: Path to GATK Mutect2 Germline Resource File.
+    group: reference_genome_options
+    help: 'The germline resource VCF file (bgzipped and tabixed) needed by GATK4 Mutect2
+      is a collection of calls that are likely present in the sample, with allele
+      frequencies.
+
+      The AF info field must be present.
+
+      You can find a smaller, stripped gnomAD VCF file (most of the annotation is
+      removed and only calls signed by PASS are stored) in the AWS iGenomes Annotation/GermlineResource
+      folder.'
+    hidden: false
+  sarek.germline_resource_tbi:
+    description: Path to GATK Mutect2 Germline Resource Index.
+    group: reference_genome_options
+    help: '> **NB** If none provided, will be generated automatically from the Germline
+      Resource file, if provided. Combine with `--save_reference` to save for future
+      runs.'
+    hidden: false
+  sarek.intervals:
+    description: Path to intervals file.
+    group: reference_genome_options
+    help: 'To speed up some preprocessing and variant calling processes, the reference
+      is chopped into smaller pieces.
+
+      The intervals are chromosomes cut at their centromeres (so each chromosome arm
+      processed separately) also additional unassigned contigs.
+
+      We are ignoring the `hs37d5` contig that contains concatenated decoy sequences.
+
+      Parts of preprocessing and variant calling are done by these intervals, and
+      the different resulting files are then merged.
+
+      This can parallelize processes, and push down wall clock time significantly.
+
+
+      The calling intervals can be defined using a .list or a BED file.
+
+      A .list file contains one interval per line in the format `chromosome:start-end`
+      (1-based coordinates).
+
+      A BED file must be a tab-separated text file with one interval per line.
+
+      There must be at least three columns: chromosome, start, and end (0-based coordinates).
+
+      Additionally, the score column of the BED file can be used to provide an estimate
+      of how many seconds it will take to call variants on that interval.
+
+      The fourth column remains unused.
+
+
+      ```
+
+      |chr1|10000|207666|NA|47.3|
+
+      ```
+
+      This indicates that variant calling on the interval chr1:10001-207666 takes
+      approximately 47.3 seconds.
+
+
+      The runtime estimate is used in two different ways.
+
+      First, when there are multiple consecutive intervals in the file that take little
+      time to compute, they are processed as a single job, thus reducing the number
+      of processes that needs to be spawned.
+
+      Second, the jobs with largest processing time are started first, which reduces
+      wall-clock time.
+
+      If no runtime is given, a time of 1000 nucleotides per second is assumed.
+
+      Actual figures vary from 2 nucleotides/second to 30000 nucleotides/second.
+
+      If you prefer, you can specify the full path to your reference genome when you
+      run the pipeline:
+
+
+      > **NB** If none provided, will be generated automatically from the FASTA reference
+
+      > **NB** Use --no_intervals to disable automatic generation.'
+    hidden: false
+  sarek.known_indels:
+    description: Path to known indels file.
+    group: reference_genome_options
+    help: ''
+    hidden: false
+  sarek.known_indels_tbi:
+    description: Path to known indels file index.
+    group: reference_genome_options
+    help: '> **NB** If none provided, will be generated automatically from the known
+      index file, if provided. Combine with `--save_reference` to save for future
+      runs.'
+    hidden: false
+  sarek.mappability:
+    description: Path to Control-FREEC mappability file.
+    group: reference_genome_options
+    help: ''
+    hidden: false
+  sarek.snpeff_db:
+    description: snpEff DB version.
+    group: reference_genome_options
+    help: ''
+    hidden: false
+  sarek.snpeff_genome:
+    description: snpeff genome.
+    group: reference_genome_options
+    help: If you use AWS iGenomes, this has already been set for you appropriately.
+    hidden: false
+  sarek.vep_genome:
+    description: VEP genome.
+    group: reference_genome_options
+    help: If you use AWS iGenomes, this has already been set for you appropriately.
+    hidden: false
+  sarek.vep_species:
+    description: VEP species.
+    group: reference_genome_options
+    help: If you use AWS iGenomes, this has already been set for you appropriately.
+    hidden: false
+  sarek.vep_cache_version:
+    description: VEP cache version.
+    group: reference_genome_options
+    help: If you use AWS iGenomes, this has already been set for you appropriately.
+    hidden: false
+  sarek.save_reference:
+    description: Save built references.
+    group: reference_genome_options
+    help: ''
+    hidden: false
+  sarek.igenomes_base:
+    description: Directory / URL base for iGenomes references.
+    group: reference_genome_options
+    help: ''
+    hidden: false
+  sarek.igenomes_ignore:
+    description: Do not load the iGenomes reference config.
+    group: reference_genome_options
+    help: 'Do not load `igenomes.config` when running the pipeline.
+
+      You may choose this option if you observe clashes between custom parameters
+      and those supplied in `igenomes.config`.
+
+
+      > **NB** You can then run `Sarek` by specifying at least a FASTA genome file.'
+    hidden: false
+  sarek.custom_config_version:
+    description: Git commit id for Institutional configs.
+    group: institutional_config_options
+    help: ''
+    hidden: true
+  sarek.custom_config_base:
+    description: Base directory for Institutional configs.
+    group: institutional_config_options
+    help: If you're running offline, Nextflow will not be able to fetch the institutional
+      config files from the internet. If you don't need them, then this is not a problem.
+      If you do need them, you should download the files from the repo and tell Nextflow
+      where to find them with this parameter.
+    hidden: true
+  sarek.config_profile_name:
+    description: Institutional config name.
+    group: institutional_config_options
+    help: ''
+    hidden: true
+  sarek.config_profile_description:
+    description: Institutional config description.
+    group: institutional_config_options
+    help: ''
+    hidden: true
+  sarek.config_profile_contact:
+    description: Institutional config contact information.
+    group: institutional_config_options
+    help: ''
+    hidden: true
+  sarek.config_profile_url:
+    description: Institutional config URL link.
+    group: institutional_config_options
+    help: ''
+    hidden: true
+  sarek.seq_center:
+    description: Sequencing center information to be added to read group (CN field).
+    group: institutional_config_options
+    help: ''
+    hidden: true
+  sarek.seq_platform:
+    description: Sequencing platform information to be added to read group (PL field).
+    group: institutional_config_options
+    help: 'Default: ILLUMINA. Will be used to create a proper header for further GATK4
+      downstream analysis.'
+    hidden: true
+  sarek.max_cpus:
+    description: Maximum number of CPUs that can be requested for any single job.
+    group: max_job_request_options
+    help: Use to set an upper-limit for the CPU requirement for each process. Should
+      be an integer e.g. `--max_cpus 1`.
+    hidden: true
+  sarek.max_memory:
+    description: Maximum amount of memory that can be requested for any single job.
+    group: max_job_request_options
+    help: Use to set an upper-limit for the memory requirement for each process. Should
+      be a string in the format integer-unit e.g. `--max_memory '8.GB'`.
+    hidden: true
+  sarek.max_time:
+    description: Maximum amount of time that can be requested for any single job.
+    group: max_job_request_options
+    help: Use to set an upper-limit for the time requirement for each process. Should
+      be a string in the format integer-unit e.g. `--max_time '2.h'`.
+    hidden: true
+  sarek.help:
+    description: Display help text.
+    group: truwl_hidden
+    help: ''
+    hidden: true
+  sarek.publish_dir_mode:
+    description: Method used to save pipeline results to output directory.
+    group: truwl_hidden
+    help: The Nextflow `publishDir` option specifies which intermediate files should
+      be saved to the output directory. This option tells the pipeline what method
+      should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir)
+      for details.
+    hidden: true
+  sarek.email:
+    description: Email address for completion summary.
+    group: truwl_hidden
+    help: Set this parameter to your e-mail address to get a summary e-mail with details
+      of the run sent to you when the workflow exits. If set in your user config file
+      (`~/.nextflow/config`) then you don't need to specify this on the command line
+      for every run.
+    hidden: false
+  sarek.email_on_fail:
+    description: Email address for completion summary, only when pipeline fails.
+    group: truwl_hidden
+    help: An email address to send a summary email to when the pipeline is completed
+      - ONLY sent if the pipeline does not exit successfully.
+    hidden: true
+  sarek.plaintext_email:
+    description: Send plain-text email instead of HTML.
+    group: truwl_hidden
+    help: ''
+    hidden: true
+  sarek.max_multiqc_email_size:
+    description: File size limit when attaching MultiQC reports to summary emails.
+    group: truwl_hidden
+    help: ''
+    hidden: true
+  sarek.monochrome_logs:
+    description: Do not use coloured log outputs.
+    group: truwl_hidden
+    help: ''
+    hidden: true
+  sarek.multiqc_title:
+    description: MultiQC report title. Printed as page header, used for filename if
+      not otherwise specified.
+    group: generic_options
+    help: ''
+    hidden: false
+  sarek.multiqc_config:
+    description: Custom config file to supply to MultiQC.
+    group: truwl_hidden
+    help: ''
+    hidden: true
+  sarek.tracedir:
+    description: Directory to keep pipeline Nextflow logs and reports.
+    group: truwl_hidden
+    help: ''
+    hidden: true
+  sarek.validate_params:
+    description: Boolean whether to validate parameters against the schema at runtime
+    group: truwl_hidden
+    help: ''
+    hidden: true
+  sarek.show_hidden_params:
+    description: Show all params when using `--help`
+    group: truwl_hidden
+    help: By default, parameters set as _hidden_ in the schema are not shown on the
+      command line when a user runs with `--help`. Specifying this option will tell
+      the pipeline to show all parameters.
+    hidden: true
+  sarek.enable_conda:
+    description: Run this workflow with Conda. You can also use '-profile conda' instead
+      of providing this parameter.
+    group: truwl_hidden
+    help: ''
+    hidden: true
+parameter_group:
+  truwl_hidden:
+    description: Parameter group for options to not expose on Truwl
+    help: Options that are not typically exposed on the Truwl interface.
+    title: Truwl hidden options
+    display: false
+  input_output_options:
+    description: Define where the pipeline should find input data and save output
+      data.
+    help: ''
+    title: Input/output options
+    display: true
+  main_options:
+    description: Option used for most of the pipeline.
+    help: null
+    title: Main options
+    display: true
+  trim_split_fastq:
+    description: ''
+    help: null
+    title: Trim/split FASTQ
+    display: true
+  preprocessing:
+    description: ''
+    help: null
+    title: Preprocessing
+    display: true
+  variant_calling:
+    description: ''
+    help: null
+    title: Variant Calling
+    display: true
+  annotation:
+    description: ''
+    help: null
+    title: Annotation
+    display: true
+  reference_genome_options:
+    description: Reference genome related files and options required for the workflow.
+    help: 'The pipeline config files come bundled with paths to the Illumina iGenomes
+      reference index files.
+
+      The configuration is set up to use the AWS-iGenomes resource
+
+      cf https://ewels.github.io/AWS-iGenomes/.'
+    title: Reference genome options
+    display: true
+  institutional_config_options:
+    description: Parameters used to describe centralised config profiles. These should
+      not be edited.
+    help: The centralised nf-core configuration profiles use a handful of pipeline
+      parameters to describe themselves. This information is then printed to the Nextflow
+      log when you run a pipeline. You should not need to change these values when
+      you run a pipeline.
+    title: Institutional config options
+    display: false
+  max_job_request_options:
+    description: Set the top limit for requested resources for any single job.
+    help: 'If you are running on a smaller system, a pipeline step requesting more
+      resources than are available may cause the Nextflow to stop the run with an
+      error. These options allow you to cap the maximum resources requested by any
+      single job so that the pipeline will run on your system.
+
+
+      Note that you can not _increase_ the resources requested by any job using these
+      options. For that you will need your own configuration file. See [the nf-core
+      website](https://nf-co.re/usage/configuration) for details.'
+    title: Max job request options
+    display: true
+  generic_options:
+    description: Less common options for the pipeline, typically set in a config file.
+    help: 'These options are common to all nf-core pipelines and allow you to customise
+      some of the core preferences for how the pipeline runs.
+
+
+      Typically these options would be set in a Nextflow config file loaded for all
+      pipeline runs, such as `~/.nextflow/config`.'
+    title: Generic options
+    display: true
